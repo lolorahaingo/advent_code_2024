@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define MAX_ROWS 100
-#define MAX_COLS 100
+#define MAX_ROWS 1000
+#define MAX_COLS 1000
 
 // Directions : haut, droite, bas, gauche
 int d_row[] = {-1, 0, 1, 0};
@@ -21,9 +21,9 @@ void print_visited(bool visited[MAX_ROWS][MAX_COLS], int rows, int cols) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             if (visited[i][j]) {
-                printf("X");  // Affiche X pour les positions visitées
+                printf("X");
             } else {
-                printf(".");  // Affiche . pour les positions non-visitées
+                printf(".");
             }
         }
         printf("\n");
@@ -61,7 +61,7 @@ void print_map(char map[MAX_ROWS][MAX_COLS], int rows, int cols) {
 }
 
 int simulate_guard(char map[MAX_ROWS][MAX_COLS], int rows, int cols) {
-    memset(visited, 0, sizeof(visited));  // Initialiser toutes les cases comme non visitées
+    memset(visited, 0, sizeof(visited));
     int visited_count = 0;
 
     // Trouver la position et la direction initiale
@@ -85,35 +85,42 @@ int simulate_guard(char map[MAX_ROWS][MAX_COLS], int rows, int cols) {
         fprintf(stderr, "Error: No guard position found.\n");
         return -1;
     }
-    
 
     printf("\nInitial guard position: (%d, %d), direction: %d\n", row, col, direction);
 
     // Simuler le mouvement
-    int steps = 0; // Ajout pour limiter les boucles infinies
+    int steps = 0;
     while (row >= 0 && row < rows && col >= 0 && col < cols) {
-        print_visited(visited, rows, cols);  // Affiche le tableau visited à chaque étape
-        
+        // Debugging : Position actuelle et direction
+        printf("Step %d: Position (%d, %d), direction: %d\n", steps, row, col, direction);
+
         // Marquer la position comme visitée
         if (!visited[row][col]) {
             visited[row][col] = true;
             visited_count++;
+            printf("  Marked position (%d, %d) as visited. Total visited: %d\n", row, col, visited_count);
         }
 
         // Calculer la prochaine position
         int next_row = row + d_row[direction];
         int next_col = col + d_col[direction];
+        printf("  Next position to check: (%d, %d)\n", next_row, next_col);
 
-        // Si obstacle, tourner à droite
-        if (next_row < 0 || next_row >= rows || next_col < 0 || next_col >= cols || map[next_row][next_col] == '#') {
-            direction = (direction + 1) % 4;  // Tourner à droite
+        // Vérifier si la prochaine position est valide
+        if (next_row < 0 || next_row >= rows || next_col < 0 || next_col >= cols) {
+            printf("  Out of bounds! Breaking simulation.\n");
+            break;
+        }
+        if (map[next_row][next_col] == '#') {
+            printf("  Obstacle detected at (%d, %d). Turning right.\n", next_row, next_col);
+            direction = (direction + 1) % 4;
         } else {
             row = next_row;
             col = next_col;
         }
 
         steps++;
-        if (steps > 100000) {  // Limiter les étapes pour éviter une boucle infinie
+        if (steps > 100000) {
             fprintf(stderr, "Infinite loop detected after %d steps. Terminating simulation.\n", steps);
             break;
         }
@@ -130,7 +137,7 @@ int main(int argc, char *argv[]) {
 
     char map[MAX_ROWS][MAX_COLS];
     int rows, cols;
-
+    printf("Avant load map\n");
     load_map(argv[1], map, &rows, &cols);
 
     printf("Initial map:\n");
