@@ -3,8 +3,8 @@
 #include <string.h>
 
 // Fonction pour remplir le tableau dynamique avec les IDs des fichiers
-void fillDiskMap(const char *line, float **diskMap, int *size) {
-    int fileId = 0;  // ID des fichiers
+void fillDiskMap(const char *line, double long **diskMap, int *size) {
+    double long fileId = 0;  // ID des fichiers
     int i;
 
     // Parcours de chaque caractère dans la chaîne lue
@@ -14,7 +14,7 @@ void fillDiskMap(const char *line, float **diskMap, int *size) {
             int digit = digitChar - '0'; // Convertir le caractère en entier
 
             // Agrandir le tableau dynamique selon la longueur du fichier
-            *diskMap = (float *)realloc(*diskMap, sizeof(float) * (*size + digit));
+            *diskMap = (double long *)realloc(*diskMap, sizeof(double long) * (*size + digit));
 
             // Remplir le tableau avec l'ID du fichier, selon la longueur donnée par digit
             for (int j = 0; j < digit; j++) {
@@ -30,7 +30,7 @@ void fillDiskMap(const char *line, float **diskMap, int *size) {
             int digit = digitChar - '0'; // Convertir le caractère en entier
 
             // Agrandir le tableau dynamique selon la longueur du fichier
-            *diskMap = (float *)realloc(*diskMap, sizeof(float) * (*size + digit));
+            *diskMap = (double long *)realloc(*diskMap, sizeof(double long) * (*size + digit));
 
             // Remplir le tableau avec l'ID du fichier, selon la longueur donnée par digit
             for (int j = 0; j < digit; j++) {
@@ -43,16 +43,16 @@ void fillDiskMap(const char *line, float **diskMap, int *size) {
 
 
 // Affichage du tableau
-void printTab(float *diskMap, int size) {
+void printTab(double long *diskMap, int size) {
     printf("Disk Map: ");
     for (int i = 0; i < size; i++) {
         if (diskMap[i] == -1) printf(".");
-        else printf("%.0f", diskMap[i]);
+        else printf("%.0Lf", diskMap[i]);
     }
     printf("\n");
 }
 
-void compressDiskMap(float *diskMap, int size) {
+void compressDiskMap(double long *diskMap, int size) {
     char released = 0;
     char stop = 0;
     // printf("InitTab: \n");
@@ -76,14 +76,14 @@ void compressDiskMap(float *diskMap, int size) {
 }
 
 // Fonction pour additionner la multiplication de chaque élément du tableau par son index
-long double sumMultiplicationsWithIncrement(float *diskMap, int size) {
+long double sumMultiplicationsWithIncrement(double long *diskMap, int size) {
     long double sum = 0;
 
     printf("\nCalcul des opérations de multiplication...\n");
     for (int i = 0; i < size; i++) {
         if(diskMap[i]==-1) break;
-        float multiplication = diskMap[i] * i;  // Multiplier la valeur à l'indice 'i' par l'indice 'i' lui-même
-        // printf("diskMap[%d] = %.0f * %d = %.0f\n", i, diskMap[i], i, multiplication);
+        long double multiplication = diskMap[i] * i;  // Multiplier la valeur à l'indice 'i' par l'indice 'i' lui-même
+        // printf("diskMap[%d] = %.0Lf * %d = %.0Lf\n", i, diskMap[i], i, multiplication);
         sum += multiplication;
         
     }
@@ -106,23 +106,35 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Trouver la taille du fichier
+    fseek(file, 0, SEEK_END); // Déplace le pointeur de fichier à la fin
+    long fileSize = ftell(file); // Obtient la position (taille en octets)
+    rewind(file); // Remet le pointeur au début
+
+    // Allouer dynamiquement de la mémoire pour le tableau 'line'
+    char *line = (char *)malloc((fileSize + 1) * sizeof(char)); // +1 pour le caractère nul '\0'
+    if (line == NULL) {
+        perror("Erreur d'allocation de mémoire");
+        fclose(file);
+        return 1;
+    }
+
     // Lecture de la chaîne de caractères depuis le fichier
-    char line[100]; // Limité à 100 caractères
-    fgets(line, sizeof(line), file);
+    fread(line, sizeof(char), fileSize, file);
+    line[fileSize] = '\0'; // Assurer que la chaîne est terminée par '\0'
     fclose(file);
 
     // Affichage de l'input de base
     printf("Input: %s\n", line);
 
     // Initialisation de la taille du tableau dynamique
-    float *diskMap = NULL; // Tableau dynamique des blocs
-    int size = 0;        // Taille actuelle du tableau
+    double long *diskMap = NULL; // Tableau dynamique des blocs
+    int size = 0;          // Taille actuelle du tableau
 
     // Appeler la fonction pour remplir le tableau avec les IDs des fichiers
     fillDiskMap(line, &diskMap, &size);
-    printTab(diskMap, size);
     compressDiskMap(diskMap, size);
-    printTab(diskMap, size);
+    // printTab(diskMap, size);
 
     // Calculer la somme des multiplications de chaque élément par son index
     long double result = sumMultiplicationsWithIncrement(diskMap, size);
@@ -131,6 +143,7 @@ int main(int argc, char *argv[]) {
     printf("\nSum of multiplications with increment: %.0Lf\n", result);
 
     // Libération de la mémoire allouée pour le tableau dynamique
+    free(line);
     free(diskMap);
 
     return 0;
